@@ -63,8 +63,8 @@ class ProductDataGrid extends DataGrid
                 'product_flat.visible_individually',
                 'af.name as attribute_family',
             )
-            ->addSelect(DB::raw('SUM(DISTINCT '.$tablePrefix.'product_inventories.qty) as quantity'))
-            ->addSelect(DB::raw('COUNT(DISTINCT '.$tablePrefix.'product_images.id) as images_count'))
+            ->addSelect(DB::raw('SUM(DISTINCT ' . $tablePrefix . 'product_inventories.qty) as quantity'))
+            ->addSelect(DB::raw('COUNT(DISTINCT ' . $tablePrefix . 'product_images.id) as images_count'))
             ->where('product_flat.locale', app()->getLocale())
             ->groupBy('product_flat.product_id');
 
@@ -96,7 +96,7 @@ class ProductDataGrid extends DataGrid
                 'filterable'         => true,
                 'filterable_type'    => 'dropdown',
                 'filterable_options' => collect($channels)
-                    ->map(fn ($channel) => ['label' => $channel->name, 'value' => $channel->code])
+                    ->map(fn($channel) => ['label' => $channel->name, 'value' => $channel->code])
                     ->values()
                     ->toArray(),
                 'sortable'   => true,
@@ -198,7 +198,7 @@ class ProductDataGrid extends DataGrid
             'filterable'         => true,
             'filterable_type'    => 'dropdown',
             'filterable_options' => collect(config('product_types'))
-                ->map(fn ($type) => ['label' => trans($type['name']), 'value' => $type['key']])
+                ->map(fn($type) => ['label' => trans($type['name']), 'value' => $type['key']])
                 ->values()
                 ->toArray(),
             'sortable'   => true,
@@ -236,6 +236,19 @@ class ProductDataGrid extends DataGrid
                         'channel' => $filteredChannel,
                     ]);
                 },
+            ]);
+        }
+
+        // Acción de Eliminar 
+        if (bouncer()->hasPermission('catalog.products.delete')) {
+            $this->addAction([
+                'icon'         => 'icon-delete',
+                'title'        => trans('admin::app.catalog.products.index.datagrid.delete'),
+                'method'       => 'DELETE',
+                'url'          => function ($row) {
+                    return route('admin.catalog.products.delete', $row->product_id);
+                },
+                'confirm_text' => trans('ui::app.datagrid.massaction.delete.confirm'),
             ]);
         }
     }
@@ -306,7 +319,7 @@ class ProductDataGrid extends DataGrid
         $channelCodes = request()->input('filters.channel') ?? core()->getAllChannels()->pluck('code')->toArray();
 
         $indexNames = collect($channelCodes)->map(function ($channelCode) {
-            return 'products_'.$channelCode.'_'.app()->getLocale().'_index';
+            return 'products_' . $channelCode . '_' . app()->getLocale() . '_index';
         })->toArray();
 
         $results = Elasticsearch::search([
@@ -330,7 +343,7 @@ class ProductDataGrid extends DataGrid
 
         if ($ids) {
             $this->queryBuilder
-                ->orderBy(DB::raw('FIELD('.DB::getTablePrefix().'product_flat.product_id, '.implode(',', $ids).')'));
+                ->orderBy(DB::raw('FIELD(' . DB::getTablePrefix() . 'product_flat.product_id, ' . implode(',', $ids) . ')'));
         }
 
         $total = $results['hits']['total']['value'];
